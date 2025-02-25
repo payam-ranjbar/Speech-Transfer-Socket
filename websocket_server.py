@@ -4,27 +4,20 @@ import json
 import websockets
 from audio_transcribe import run_recording
 
-connected_clients = {}
 async def send_audio(websocket):
     print("🔗 Client connected!")
 
-    try:
-        message = await websocket.recv()
-        target_words = json.loads(message)
-        print(f"🎯 Listening for: {target_words}")
+    await websocket.send("Client Connected Successfully bicth")
+    loop = asyncio.get_event_loop()
 
-        connected_clients[websocket] = set(target_words)
+    def sync_callback(word):
+        asyncio.run_coroutine_threadsafe(send_word(word), loop)
 
-        async def send_word(word):
-            if word in connected_clients[websocket]:
-                print("sending: ", word)
-                await websocket.send(word)  # <-- Ensure send_word() is awaited properly
+    async def send_word(word):
+        print("Sending:", word)
+        await websocket.send(word)
 
-        await run_recording(send_word)  # <-- Await async function
-
-    except websockets.exceptions.ConnectionClosed:
-        print("❌ Client disconnected.")
-        connected_clients.pop(websocket, None)
+    await loop.run_in_executor(None, run_recording, sync_callback)
 
 
 async def main():
