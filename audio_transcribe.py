@@ -23,15 +23,21 @@ def start_microphone():
     return stream, mic
 
 
-def read_stream(stream, mic):
+def read_stream(stream, mic, callback):
+    last_word = ""
     try:
         while True:
             data = stream.read(1000, exception_on_overflow=False)
             recognizer.AcceptWaveform(data)
             partial_result = json.loads(recognizer.PartialResult())["partial"]
+
             if partial_result.strip():
-                sys.stdout.write("\r" + partial_result + " ")
-                sys.stdout.flush()
+                words = partial_result.split()
+                if words:
+                    new_word = words[-1]
+                    if new_word != last_word:
+                        last_word = new_word
+                        callback(new_word)
 
     except KeyboardInterrupt:
         print("\n🚫 Stopping speech recognition.")
@@ -40,10 +46,14 @@ def read_stream(stream, mic):
         mic.terminate()
 
 
-def run_recording():
+def run_recording(callback):
     stream, mic = start_microphone()
-    read_stream(stream, mic)
+    read_stream(stream, mic, callback)
+
+def print_partial_results(results):
+    print("\r " + results)
+    sys.stdout.flush()
 
 
 if __name__ == "__main__":
-    run_recording()
+    run_recording(print_partial_results)
