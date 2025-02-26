@@ -69,14 +69,11 @@ ws.Connect();
 ## Technical Architecture
 
 ```mermaid
-sequenceDiagram
-    participant Microphone
-    participant Server
-    participant Client
-    Microphone->>Server: Audio Stream
-    Server->>Vosk: Speech Recognition
-    Vosk->>Server: Text Results
-    Server->>Client: WebSocket Messages
+graph TD
+    A[WebSocket Server] -->|Main Thread| B[Async Event Loop]
+    B --> C[Audio Thread]
+    C --> D[Vosk Processing]
+    B --> E[WebSocket Messages]
 ```
 
 ---
