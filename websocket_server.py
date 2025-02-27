@@ -7,7 +7,7 @@ from audio_transcribe import run_recording
 async def send_audio(websocket):
     print("🔗 Client connected!")
 
-    await websocket.send("Client Connected Successfully bicth")
+    await websocket.send("ping")
     loop = asyncio.get_event_loop()
 
     def sync_callback(word):
