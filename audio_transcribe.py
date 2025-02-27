@@ -12,6 +12,8 @@ vosk_model = os.getenv("MODEL_PATH")
 model = Model(vosk_model)
 recognizer = KaldiRecognizer(model, 16000)
 
+mic_index = 1
+
 if not vosk_model:
     print("MODEL_PATH is not set in .env file.")
     sys.exit(1)
@@ -28,23 +30,24 @@ def list_microphones():
 
 def choose_microphone():
     list_microphones()
+    global mic_index
     try:
-        device_index = int(input("🎤 Enter the index of your preferred microphone: "))
-        return device_index
+        mic_index = int(input("🎤 Enter the index of your preferred microphone: "))
     except ValueError:
         print("❌ Invalid input. Defaulting to system default microphone.")
         return None
 
 
-def start_microphone(device_index=1):
+def start_microphone():
     mic = pyaudio.PyAudio()
 
     stream = mic.open(format=pyaudio.paInt16, channels=1, rate=16000, input=True,
-                      input_device_index=device_index, frames_per_buffer=1000)
+                      input_device_index=mic_index, frames_per_buffer=1000)
 
     stream.start_stream()
-    print(f"✅ Using microphone: {mic.get_device_info_by_index(device_index)['name']}")
+    print(f"✅ Using microphone: {mic.get_device_info_by_index(mic_index)['name']}")
     return stream, mic
+
 
 def read_stream(stream, mic, callback):
     last_word = ""
@@ -73,11 +76,16 @@ def run_recording(callback):
     stream, mic = start_microphone()
     read_stream(stream, mic, callback)
 
+
 async def print_partial_results(results):
     print("\r " + results)
     await asyncio.sleep(0)  # Yield control to the event loop
 
+
 async def run_local():
+    list_microphones()
     await run_recording(print_partial_results)
+
+
 if __name__ == "__main__":
     asyncio.run(run_local())
